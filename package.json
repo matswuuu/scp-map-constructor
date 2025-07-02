@@ -1,9 +1,9 @@
 {
   "name": "scp-map-constructor",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
-  "homepage": "https://matswuuu.github.io/scp-map-constructor",
+  "homepage": "https://matswuuu.github.io/scp-map-constructor/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
