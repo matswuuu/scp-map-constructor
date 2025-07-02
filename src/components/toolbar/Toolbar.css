@@ -1,0 +1,126 @@
+.toolbar {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: var(--color-bg-default);
+    padding: var(--spacing);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    display: flex;
+    gap: var(--spacing);
+    user-select: none;
+}
+
+.toolbar__title {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.toolbar__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toolbar__label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.toolbar__button {
+    padding: 8px 12px;
+    background-color: #666;
+    color: var(--color-bg-default);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    flex: 1;
+    transition: background-color 0.2s;
+}
+
+.toolbar__button--primary {
+    background-color: #2196f3;
+}
+
+.toolbar__button--primary:hover {
+    background-color: #1976d2;
+}
+
+.toolbar__button--orange {
+    background-color: #ff9800;
+}
+
+.toolbar__button--orange:hover {
+    background-color: #f57c00;
+}
+
+.toolbar__button--danger {
+    background-color: #f44336;
+}
+
+.toolbar__button--danger:hover {
+    background-color: #d32f2f;
+}
+
+.toolbar__button--success {
+    background-color: #4caf50;
+}
+
+.toolbar__button--success:hover {
+    background-color: #388e3c;
+}
+
+.toolbar__info {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: var(--color-bg-default);
+    border-radius: 4px;
+    font-size: 11px;
+    color: #666;
+}
+
+.toolbar-button {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap);
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: var(--color-bg-default);
+    color: var(--color-text-default);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size);
+    transition: background-color var(--transition-speed) ease,
+    color var(--transition-speed) ease,
+    border-color var(--transition-speed) ease;
+    user-select: none;
+    text-align: center;
+}
+
+.toolbar-button.active {
+    background-color: var(--color-bg-active);
+    color: var(--color-text-active);
+    border-color: var(--color-bg-active);
+}
+
+.toolbar-button:hover,
+.toolbar-button:focus-visible {
+    background-color: var(--color-bg-hover);
+    outline-offset: 2px;
+    outline: 2px solid var(--color-bg-active);
+}
+
+.toolbar-button svg {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+} 

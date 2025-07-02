@@ -1,0 +1,49 @@
+.app-layout {
+    display: flex;
+    height: 100vh;
+    background: var(--tg-color-bg);
+}
+
+.sidebar {
+    width: 320px;
+    background: var(--tg-color-bg-sidebar);
+    border-right: 1px solid var(--tg-color-border);
+    box-shadow: var(--tg-shadow);
+    display: flex;
+    flex-direction: column;
+    padding: var(--tg-spacing-lg) var(--tg-spacing-md);
+}
+
+.header {
+    height: 56px;
+    background: var(--tg-color-bg-alt);
+    border-bottom: 1px solid var(--tg-color-border);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--tg-spacing-lg);
+    font-size: var(--tg-font-size-large);
+    font-weight: var(--tg-font-weight-bold);
+    color: var(--tg-color-primary);
+    box-shadow: var(--tg-shadow);
+}
+
+.main {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--tg-color-bg-alt);
+    overflow: auto;
+    padding: var(--tg-spacing-lg);
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        width: 72px;
+        padding: var(--tg-spacing-md) var(--tg-spacing-xs);
+    }
+
+    .header {
+        font-size: var(--tg-font-size);
+        padding: 0 var(--tg-spacing-md);
+    }
+} 

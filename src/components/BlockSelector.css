@@ -1,0 +1,120 @@
+.block-selector {
+    width: 320px;
+    height: 100vh;
+    background-color: var(--color-bg-default);
+    border-left: 2px solid var(--color-bg-default);
+    padding: 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.block-selector__title {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.5rem;
+    text-align: center;
+    border-bottom: 2px solid var(--color-bg-default);
+    padding-bottom: 10px;
+}
+
+.block-selector__list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.structure-item {
+    padding: 15px;
+    background-color: var(--color-bg-default);
+    border: 1px solid var(--color-bg-default);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.structure-item--selected {
+    background-color: var(--color-bg-default);
+    border: 2px solid #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.structure-item:hover:not(.structure-item--selected) {
+    background-color: var(--color-bg-default);
+    transform: translateY(-2px);
+}
+
+.structure-item:not(.structure-item--selected) {
+    background-color: var(--color-bg-default);
+    transform: translateY(0);
+}
+
+.structure-preview {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.structure-item__id {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.structure-item__color {
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+
+.structure-item__rotation {
+    font-size: 10px;
+    color: #666;
+    background-color: var(--color-bg-default);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.pointer-tool {
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-bg-default);
+    background-color: var(--color-bg-default);
+}
+
+.pointer-tool--selected {
+    background-color: var(--color-bg-default);
+    border: 2px solid #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.pointer-tool__icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.pointer-tool__delete {
+    margin-left: 8px;
+    padding: 8px 12px;
+    background: #f44336;
+    color: var(--color-bg-default);
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pointer-tool__delete:hover {
+    background: #d32f2f;
+} 
