@@ -130,7 +130,6 @@ function App() {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -141,7 +140,31 @@ function App() {
                     const importedBlocks: Record<string, PlacedBlock[]> = {};
                     LAYER_DEFS.forEach(def => {
                         const importedLayer = data.layers.find((l: { value: string }) => l.value === def.value);
-                        importedBlocks[def.value] = importedLayer?.placedBlocks || [];
+                        if (importedLayer?.placedBlocks) {
+                            importedBlocks[def.value] = importedLayer.placedBlocks.map((b: any) => {
+                                // Only support [x, y, z] array or explicit x, y, z fields
+                                let x, y, z;
+                                if (Array.isArray(b.pos)) {
+                                    [x, y, z] = b.pos;
+                                } else if (
+                                    typeof b.x === 'number' &&
+                                    typeof b.y === 'number' &&
+                                    typeof b.z === 'number'
+                                ) {
+                                    x = b.x;
+                                    y = b.y;
+                                    z = b.z;
+                                } else {
+                                    throw new Error('Each block must have either a coords array or explicit x, y, z fields.');
+                                }
+                                return {
+                                    ...b,
+                                    x, y, z
+                                };
+                            });
+                        } else {
+                            importedBlocks[def.value] = [];
+                        }
                     });
                     setAllBlocks(importedBlocks);
                 } else {
@@ -160,23 +183,27 @@ function App() {
     }
 
     const handleExport = () => {
+        // Export coordinates as [x, y, z] arrays
         const data = {
-            layers: layers
+            layers: layers.map(layer => ({
+                ...layer,
+                placedBlocks: layer.placedBlocks.map(b => ({
+                    ...b,
+                    pos: [b.x, b.y, b.z]
+                }))
+            }))
         };
-
         const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], {type: "application/json"});
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-
         link.href = url;
         link.download = "map-config.json";
         document.body.appendChild(link);
         link.click();
-
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    }
+    };
 
     return (
         <div className="app">
