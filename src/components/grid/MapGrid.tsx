@@ -58,12 +58,12 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
 
         // Convert to world coordinates (reverse the pan and zoom)
         const worldX = (px - camera.x) / camera.zoom;
-        const worldY = (pz - camera.y) / camera.zoom;
+        const worldZ = (pz - camera.y) / camera.zoom;
 
         return {
             x: Math.floor(worldX / CELL_SIZE),
             y: 0,
-            z: Math.floor(worldY / CELL_SIZE)
+            z: -Math.floor(worldZ / CELL_SIZE)
         };
     };
 
@@ -106,11 +106,11 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         if (!canvas || !renderer) return;
 
         const startX = -camera.x / camera.zoom;
-        const startY = -camera.y / camera.zoom;
+        const startZ = -camera.y / camera.zoom;
         const endX = startX + canvas.width / camera.zoom;
-        const endY = startY + canvas.height / camera.zoom;
+        const endZ = startZ + canvas.height / camera.zoom;
 
-        renderer.drawGridLines(startX, endX, startY, endY);
+        renderer.drawGridLines(startX, endX, startZ, endZ);
     }, [camera.x, camera.y, camera.zoom, getRenderer]);
 
     const drawPreview = useCallback(() => {
@@ -128,6 +128,9 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
             const {x, z} = translate(hoverCell, anchor, currentRotation)
             renderer.drawOutlineCell(x, z, "yellow");
         });
+
+        const {x: pivotX, z: pivotZ} = translate(hoverCell, selectedStructure.pivotPoint, currentRotation);
+        renderer.drawOutlineCell(pivotX, pivotZ, "green");
     }, [currentRotation, getRenderer, hoverCell, selectedStructure]);
 
     const drawPlacedBlocks = useCallback(() => {
@@ -148,6 +151,8 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
                 const {x, z} = translate(block, anchor, rotation)
                 renderer.drawOutlineCell(x, z, "yellow");
             });
+            const {x: pivotX, z: pivotZ} = translate(block, structure.pivotPoint, rotation);
+            renderer.drawOutlineCell(pivotX, pivotZ, "green");
         });
     }, [getRenderer, getStructureById, placedBlocks]);
 
@@ -194,20 +199,21 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
     }, [camera, drawGrid, drawPreview, drawPlacedBlocks, draw]);
 
     const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
         const delta = -e.deltaY * 0.005;
         const newZoom = Math.min(1, Math.max(0.35, camera.zoom + delta));
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
         const worldX = (mouseX - camera.x) / camera.zoom;
-        const worldY = (mouseY - camera.y) / camera.zoom;
+        const worldZ = (mouseY - camera.y) / camera.zoom;
 
         const newOffsetX = mouseX - worldX * newZoom;
-        const newOffsetY = mouseY - worldY * newZoom;
+        const newOffsetY = mouseY - worldZ * newZoom;
 
         setCamera({x: newOffsetX, y: newOffsetY, zoom: newZoom});
         requestAnimationFrame(draw);
@@ -274,6 +280,7 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         } else {
             const hoverCell = getGridCell(e.clientX, e.clientY);
             setHoverCell(hoverCell);
+            console.log(`Mouse pos X: ${hoverCell.x}, Y: ${hoverCell.y} Z: ${hoverCell.z}`);
         }
     };
 

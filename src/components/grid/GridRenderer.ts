@@ -49,25 +49,25 @@ export class GridRenderer {
         this.drawOutlineCell(0, 0, 'red')
     }
 
-    drawBlockCell(x: number, y: number, color: string) {
+    drawBlockCell(x: number, z: number, color: string) {
         this.context.save();
         this.#translate();
         this.context.globalAlpha = 0.75;
         this.context.fillStyle = color;
         this.context.strokeStyle = '#333';
         this.context.lineWidth = 1 / this.camera.zoom;
-        this.context.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        this.context.fillRect(x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
         this.context.globalAlpha = 1;
         this.context.restore();
     }
 
-    drawOutlineCell(x: number, y: number, color: string) {
+    drawOutlineCell(x: number, z: number, color: string) {
         this.context.save();
         this.#translate();
 
         this.context.strokeStyle = color;
         this.context.lineWidth = 2 / this.camera.zoom;
-        this.context.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        this.context.strokeRect(x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
 
         this.context.restore();
     }
