@@ -11,9 +11,9 @@ export interface BlockStructure {
     pivotPoint: Block;
     pos1: Block;
     pos2: Block;
+    color: string;
     anchors: [Block];
     occupiedBlocks: Array<Block>; // List of block coordinates, relative to pivotPoint
-    color: string;
 }
 
 export interface PlacedBlock extends Block {
