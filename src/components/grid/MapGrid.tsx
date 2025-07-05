@@ -1,34 +1,36 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import type {Block, BlockStructure, PlacedBlock} from "../../types/Block.ts";
-import {canPlaceStructure, getStructureCells, rotateBlock} from "../../utils/structureUtils.ts";
+import type {Pos} from "../../utils/pos.ts";
+import {canPlaceStructure, getStructureCells, rotateBlock} from "../../utils/structure-utils.ts";
 import {GridRenderer} from "./GridRenderer.ts";
-import type {Camera} from "../../utils/Camera.ts";
+import type {Camera} from "../../utils/camera.ts";
 import type {Tool} from "../toolbar/Tool.ts";
-import type {Rotation} from "../../utils/Rotation.ts";
+import type {Rotation} from "../../utils/rotation.ts";
+import type {Scheme} from "../../types/scheme/Scheme.ts";
+import type {Structure} from "../../types/Structure.ts";
 
 const CELL_SIZE = 40;
 
 interface InfiniteGridProps {
     activeTool: Tool;
 
-    selectedStructure: BlockStructure | null;
-    selectedBlock: PlacedBlock[];
+    selectedScheme: Scheme | null;
+    selectedStructure: Structure[];
     currentRotation: Rotation;
-    placedBlocks: PlacedBlock[];
-    structures: BlockStructure[];
+    placedStructures: Structure[];
+    schemes: Scheme[];
 
-    onStructurePlace: (block: PlacedBlock) => void;
-    onStructureRemove: (block: Block) => void;
+    onStructurePlace: (block: Structure) => void;
+    onStructureRemove: (block: Pos) => void;
 }
 
 const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
                                                          activeTool,
 
+                                                         selectedScheme,
                                                          selectedStructure,
-                                                         selectedBlock,
                                                          currentRotation,
-                                                         placedBlocks,
-                                                         structures,
+                                                         placedStructures,
+                                                         schemes,
 
                                                          onStructurePlace,
                                                          onStructureRemove
@@ -40,9 +42,9 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
     const isDragging = useRef(false);
     const dragStart = useRef({x: 0, y: 0});
     const offsetStart = useRef({x: 0, y: 0});
-    const [hoverCell, setHoverCell] = useState<Block | null>(null);
+    const [hoverCell, setHoverCell] = useState<Pos | null>(null);
 
-    const getGridCell = (x: number, z: number): Block => {
+    const getGridCell = (x: number, z: number): Pos => {
         const canvas = canvasRef.current;
         if (!canvas) return {x: 0, y: 0, z: 0};
 
@@ -67,20 +69,20 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         };
     };
 
-    const getStructureById = useCallback((id: string | null) => structures.find(s => s.id === id) || null, [structures]);
+    const getSchemeById = useCallback((id: string | null) => schemes.find(s => s.schemeId === id) || null, [schemes]);
 
     const getOccupiedCells = useCallback(() => {
         const occupiedCells = new Set<string>();
-        placedBlocks.forEach(block => {
-            const structure = getStructureById(block.id);
+        placedStructures.forEach(block => {
+            const structure = getSchemeById(block.schemeId);
             if (structure) {
-                getStructureCells(structure, block.x, block.z, block.rotation).forEach(cell => {
+                getStructureCells(structure, block.pos.x, block.pos.z, block.rotation).forEach(cell => {
                     occupiedCells.add(`${cell.x},${cell.z}`);
                 });
             }
         });
         return occupiedCells;
-    }, [getStructureById, placedBlocks]);
+    }, [getSchemeById, placedStructures]);
 
     const getRenderer = useCallback((): GridRenderer | null => {
         const canvas = canvasRef.current;
@@ -91,9 +93,9 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         return new GridRenderer(ctx, camera, CELL_SIZE, canvas);
     }, [camera])
 
-    const translate = (parent: Block,
-                       point: Block,
-                       rotation: Rotation): Block => {
+    const translate = (parent: Pos,
+                       point: Pos,
+                       rotation: Rotation): Pos => {
         point = rotateBlock(point, rotation)
         const worldX = parent.x + point.x;
         const worldZ = parent.z + point.z;
@@ -114,64 +116,64 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
     }, [camera.x, camera.y, camera.zoom, getRenderer]);
 
     const drawPreview = useCallback(() => {
-        if (!hoverCell || !selectedStructure) return;
+        if (!hoverCell || !selectedScheme) return;
 
         const canvas = canvasRef.current;
         const renderer = getRenderer();
         if (!canvas || !renderer) return;
 
-        selectedStructure.occupiedBlocks.forEach(occupiedBlock => {
+        selectedScheme.occupiedBlocks.forEach(occupiedBlock => {
             const {x, z} = translate(hoverCell, occupiedBlock, currentRotation)
-            renderer.drawBlockCell(x, z, selectedStructure.color);
+            renderer.drawBlockCell(x, z, selectedScheme.color);
         });
-        selectedStructure.anchors.forEach(anchor => {
+        selectedScheme.anchors.forEach(anchor => {
             const {x, z} = translate(hoverCell, anchor, currentRotation)
             renderer.drawOutlineCell(x, z, "yellow");
         });
 
-        const {x: pivotX, z: pivotZ} = translate(hoverCell, selectedStructure.pivotPoint, currentRotation);
-        renderer.drawOutlineCell(pivotX, pivotZ, "green");
-    }, [currentRotation, getRenderer, hoverCell, selectedStructure]);
+        const {x: pivotX, z: pivotZ} = translate(hoverCell, {x: 0, y: 0, z: 0}, currentRotation);
+        renderer.drawBlockCell(pivotX, pivotZ, "green");
+    }, [currentRotation, getRenderer, hoverCell, selectedScheme]);
 
     const drawPlacedBlocks = useCallback(() => {
         const canvas = canvasRef.current;
         const renderer = getRenderer();
         if (!canvas || !renderer) return;
 
-        placedBlocks.forEach(block => {
-            const structure = getStructureById(block.id);
+        placedStructures.forEach(block => {
+            const structure = getSchemeById(block.schemeId);
             if (!structure) return;
 
             const rotation = block.rotation;
             structure.occupiedBlocks.forEach(occupiedBlock => {
-                const {x, z} = translate(block, occupiedBlock, rotation)
+                const {x, z} = translate(block.pos, occupiedBlock, rotation)
                 renderer.drawBlockCell(x, z, structure.color);
             });
             structure.anchors.forEach(anchor => {
-                const {x, z} = translate(block, anchor, rotation)
+                const {x, z} = translate(block.pos, anchor, rotation)
                 renderer.drawOutlineCell(x, z, "yellow");
             });
-            const {x: pivotX, z: pivotZ} = translate(block, structure.pivotPoint, rotation);
-            renderer.drawOutlineCell(pivotX, pivotZ, "green");
+            const {x: pivotX, z: pivotZ} = translate(block.pos, {x: 0, y: 0, z: 0}, currentRotation);
+            renderer.drawBlockCell(pivotX, pivotZ, "green");
         });
-    }, [getRenderer, getStructureById, placedBlocks]);
+    }, [getRenderer, getSchemeById, placedStructures]);
 
     const drawSelectedBlocks = useCallback(() => {
         const canvas = canvasRef.current;
         const renderer = getRenderer();
         if (!canvas || !renderer) return;
 
-        selectedBlock.forEach(block => {
-            const structure = getStructureById(block.id);
+        selectedStructure.forEach(block => {
+            const structure = getSchemeById(block.schemeId);
             if (!structure) return;
 
             const rotation = block.rotation;
             structure.occupiedBlocks.forEach(occupiedBlock => {
-                const {x, z} = translate(block, occupiedBlock, rotation)
+                const {x, z} = translate(block.pos, occupiedBlock, rotation)
                 renderer.drawOutlineCell(x, z, "blue");
             });
         });
-    }, [getRenderer, getStructureById, selectedBlock]);
+    }, [getRenderer, getSchemeById, selectedStructure]);
 
     const draw = useCallback(() => {
         drawGrid();
@@ -221,15 +223,13 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
 
     const placeStructure = (x: number, z: number) => {
         const cell = getGridCell(x, z);
-        if (!selectedStructure) return;
+        if (!selectedScheme) return;
 
         const occupiedCells = getOccupiedCells();
-        if (canPlaceStructure(selectedStructure, cell.x, cell.z, currentRotation, occupiedCells)) {
+        if (canPlaceStructure(selectedScheme, cell.x, cell.z, currentRotation, occupiedCells)) {
             onStructurePlace({
-                x: cell.x,
-                y: 0,
-                z: cell.z,
-                id: selectedStructure.id,
+                pos: {x: cell.x, y: 0, z: cell.z},
+                schemeId: selectedScheme.schemeId,
                 rotation: currentRotation,
             });
         }
@@ -251,7 +251,7 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
             case 0:
                 if (e.shiftKey) {
                     drag(e.clientX, e.clientY)
-                } else if (selectedStructure) {
+                } else if (selectedScheme) {
                     placeStructure(e.clientX, e.clientY);
                 } else if (e.ctrlKey) {
                     removeStructure(e.clientX, e.clientY)
@@ -280,7 +280,7 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         } else {
             const hoverCell = getGridCell(e.clientX, e.clientY);
             setHoverCell(hoverCell);
-            console.log(`Mouse pos X: ${hoverCell.x}, Y: ${hoverCell.y} Z: ${hoverCell.z}`);
+            console.debug(`Mouse pos X: ${hoverCell.x}, Y: ${hoverCell.y} Z: ${hoverCell.z}`);
         }
     };
 

@@ -1,4 +1,4 @@
-import type {Camera} from "../../utils/Camera.ts";
+import type {Camera} from "../../utils/camera.ts";
 
 export class GridRenderer {
     public context: CanvasRenderingContext2D;

@@ -1,19 +1,21 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import './App.css';
 import InfiniteGrid from "./components/grid/MapGrid.tsx";
-import type {Block, BlockStructure, PlacedBlock} from "./types/Block.ts";
+import type {Pos} from "./utils/pos.ts";
 import defaultStructures from "./config/blocks.ts";
 import Toolbar from "./components/toolbar/Toolbar.tsx";
-import {getStructureCells} from "./utils/structureUtils.ts";
-import BlockSelector from "./components/BlockSelector.tsx";
+import {getStructureCells} from "./utils/structure-utils.ts";
+import BlockSelector from "./components/selector/SchemeSelector.tsx";
 import type {Tool, ToolType} from "./components/toolbar/Tool.ts";
 import {FaMousePointer, FaPlusSquare, FaSyncAlt} from "react-icons/fa";
 import {FaComputerMouse} from "react-icons/fa6";
 import {useHotkeys} from "react-hotkeys-hook";
-import type {Rotation} from "./utils/Rotation.ts";
+import type {Rotation} from "./utils/rotation.ts";
 import useUndo from "use-undo";
 import type {Layer} from "./types/Layer.ts";
 import {WarnOnPageUnload} from "./components/WarnMessage.tsx";
+import type {Scheme} from "./types/scheme/Scheme.ts";
+import type {Structure} from "./types/Structure.ts";
 
 function App() {
     const tools = new Map<ToolType, Tool>();
@@ -39,7 +41,7 @@ function App() {
         icon: <FaSyncAlt/>,
         onCellClick: cell => {
             getBlocksMatchingCell(cell)
-                .forEach((v: PlacedBlock) => v.rotation = (v.rotation + 90) % 360 as Rotation);
+                .forEach((v: Structure) => v.rotation = (v.rotation + 90) % 360 as Rotation);
         }
     })
     tools.set('placer', {
@@ -56,8 +58,8 @@ function App() {
         setActiveTool(tools.get(tool)!);
     }
 
-    const [selectedStructure, setSelectedStructure] = useState<BlockStructure | null>(null);
-    const [selectedBlock, setSelectedBlock] = useState<PlacedBlock[]>([]);
+    const [selectedStructure, setSelectedStructure] = useState<Scheme | null>(null);
+    const [selectedBlock, setSelectedBlock] = useState<Structure[]>([]);
     const [currentRotation, setCurrentRotation] = useState<Rotation>(0);
 
     const LAYER_DEFS = useMemo(() => [
@@ -66,7 +68,7 @@ function App() {
         {value: "office-zone", name: "Офисы"}
     ], []);
 
-    const [allBlocks, {set: setAllBlocks, undo, redo}] = useUndo<Record<string, PlacedBlock[]>>({
+    const [allBlocks, {set: setAllBlocks, undo, redo}] = useUndo<Record<string, Structure[]>>({
         ...Object.fromEntries(LAYER_DEFS.map((def) => [def.value, []]))
     });
 
@@ -83,33 +85,33 @@ function App() {
     const currentLayerBlocks = useMemo(() => allBlocks.present[currentLayer] || [], [allBlocks.present, currentLayer]);
 
     // Helper to get structure for a block
-    const getStructureForBlock = (b: PlacedBlock): BlockStructure | undefined =>
-        defaultStructures.find((s: BlockStructure) => s.id === b.id);
+    const getStructureForBlock = (b: Structure): Scheme | undefined =>
+        defaultStructures.find((s: Scheme) => s.schemeId === b.schemeId);
 
     // Helper to get blocks matching a cell
-    const getBlocksMatchingCell = (cell: Block): PlacedBlock[] =>
-        currentLayerBlocks.filter((b: PlacedBlock) => {
+    const getBlocksMatchingCell = (cell: Pos): Structure[] =>
+        currentLayerBlocks.filter((b: Structure) => {
             const structure = getStructureForBlock(b);
             if (!structure) return true;
-            const cells = getStructureCells(structure, b.x, b.z, b.rotation);
-            return cells.some((v: Block) => v.x === cell.x && v.z === cell.z);
+            const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
+            return cells.some((v: Pos) => v.x === cell.x && v.z === cell.z);
         });
 
-    const handleStructurePlace = useCallback((block: PlacedBlock) => {
+    const handleStructurePlace = useCallback((block: Structure) => {
         setAllBlocks({
             ...allBlocks.present,
             [currentLayer]: [...currentLayerBlocks, block]
         });
     }, [allBlocks.present, setAllBlocks, currentLayer, currentLayerBlocks]);
 
-    const handleStructureRemove = useCallback((block: Block) => {
+    const handleStructureRemove = useCallback((block: Pos) => {
         setAllBlocks({
             ...allBlocks.present,
-            [currentLayer]: currentLayerBlocks.filter((b: PlacedBlock) => {
-                const structure = defaultStructures.find((s: BlockStructure) => s.id === b.id);
+            [currentLayer]: currentLayerBlocks.filter((b: Structure) => {
+                const structure = defaultStructures.find((s: Scheme) => s.schemeId === b.schemeId);
                 if (!structure) return true;
-                const cells = getStructureCells(structure, b.x, b.z, b.rotation);
-                return !cells.some((cell: Block) => cell.x === block.x && cell.z === block.z);
+                const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
+                return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
             })
         });
     }, [allBlocks.present, setAllBlocks, currentLayer, currentLayerBlocks]);
@@ -119,7 +121,7 @@ function App() {
     useHotkeys('ctrl+y', () => redo());
     useHotkeys(['delete', 'backspace'], () => {
         if (selectedBlock.length > 0) {
-            handleStructureRemove(selectedBlock[0])
+            handleStructureRemove(selectedBlock[0].pos)
             setSelectedBlock([])
         }
     });
@@ -137,7 +139,7 @@ function App() {
                 const data = JSON.parse(json);
                 if (data && Array.isArray(data.layers)) {
                     // Only import blocks for known layers
-                    const importedBlocks: Record<string, PlacedBlock[]> = {};
+                    const importedBlocks: Record<string, Structure[]> = {};
                     LAYER_DEFS.forEach(def => {
                         const importedLayer = data.layers.find((l: { value: string }) => l.value === def.value);
                         if (importedLayer?.placedBlocks) {
@@ -159,7 +161,11 @@ function App() {
                                 }
                                 return {
                                     ...b,
-                                    x, y, z
+                                    pos: {
+                                        x: x,
+                                        y: y,
+                                        z: z,
+                                    }
                                 };
                             });
                         } else {
@@ -189,7 +195,7 @@ function App() {
                 ...layer,
                 placedBlocks: layer.placedBlocks.map(b => ({
                     ...b,
-                    pos: [b.x, b.y, b.z]
+                    pos: [b.pos.x, b.pos.y, b.pos.z]
                 }))
             }))
         };
@@ -226,16 +232,16 @@ function App() {
             />
             <InfiniteGrid
                 activeTool={activeTool}
-                selectedStructure={selectedStructure}
-                selectedBlock={selectedBlock}
+                selectedScheme={selectedStructure}
+                selectedStructure={selectedBlock}
                 currentRotation={currentRotation}
-                placedBlocks={currentLayerBlocks}
-                structures={defaultStructures}
+                placedStructures={currentLayerBlocks}
+                schemes={defaultStructures}
                 onStructurePlace={handleStructurePlace}
                 onStructureRemove={handleStructureRemove}
             />
             <BlockSelector
-                onStructureSelect={structure => {
+                onSchemeSelect={structure => {
                     setSelectedStructure(structure)
                     updateActiveTool('placer')
                 }}
