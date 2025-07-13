@@ -56,7 +56,7 @@ export class GridRenderer {
         this.context.fillStyle = color;
         this.context.strokeStyle = '#333';
         this.context.lineWidth = 1 / this.camera.zoom;
-        this.context.fillRect(x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
+        this.context.fillRect(-x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
         this.context.globalAlpha = 1;
         this.context.restore();
     }
@@ -67,7 +67,7 @@ export class GridRenderer {
 
         this.context.strokeStyle = color;
         this.context.lineWidth = 2 / this.camera.zoom;
-        this.context.strokeRect(x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
+        this.context.strokeRect(-x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
 
         this.context.restore();
     }

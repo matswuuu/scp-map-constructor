@@ -1,27 +1,28 @@
-import type {Pos, Scheme} from './pos.ts';
+import type {Pos} from './pos.ts';
 import type {Rotation} from "./rotation.ts";
+import type {Scheme} from "../types/scheme/Scheme.ts";
 
 /**
  * Rotates a single block coordinate around a pivot
  */
 export function rotateBlock(block: Pos, rotation: Rotation): Pos {
-    const dx = block.x;
-    const dz = block.z;
+    const dx = -block.x;
+    const dz = -block.z;
     let rx = dx;
     let rz = dz;
 
     switch (rotation) {
         case 90:
-            rx = dz;
-            rz = -dx;
+            rx = -dz;
+            rz = dx;
             break;
         case 180:
             rx = -dx;
             rz = -dz;
             break;
         case 270:
-            rx = -dz;
-            rz = dx;
+            rx = dz;
+            rz = -dx;
             break;
     }
 
@@ -33,11 +34,11 @@ export function rotateBlock(block: Pos, rotation: Rotation): Pos {
 }
 
 /**
- * Rotates occupiedBlocks of a structure
+ * Rotates occupiedBlocks of a scheme
  */
-export function rotateOccupiedBlocks(structure: Scheme,
+export function rotateOccupiedBlocks(scheme: Scheme,
                                      rotation: Rotation): Array<Pos> {
-    return structure.occupiedBlocks.map(block => rotateBlock(block, rotation));
+    return scheme.occupiedBlocks.map(block => rotateBlock(block, rotation));
 }
 
 /**
@@ -52,8 +53,8 @@ export function canPlaceStructure(
 ): boolean {
     const rotatedBlocks = rotateOccupiedBlocks(structure, rotation);
     for (const block of rotatedBlocks) {
-        const worldX = x + (block.x);
-        const worldZ = z + (block.z);
+        const worldX = -x + (block.x);
+        const worldZ = -z + (block.z);
         const cellKey = `${worldX},${worldZ}`;
         if (occupiedCells.has(cellKey)) {
             return false;
@@ -73,8 +74,8 @@ export function getStructureCells(
 ): Pos[] {
     const rotatedBlocks = rotateOccupiedBlocks(structure, rotation);
     return rotatedBlocks.map(block => ({
-        x: x + (block.x),
+        x: -x + (block.x),
         y: 0,
-        z: z + (block.z)
+        z: -z + (block.z)
     }));
 }

@@ -2,7 +2,7 @@ import React, {useCallback, useMemo, useRef, useState} from 'react';
 import './App.css';
 import InfiniteGrid from "./components/grid/MapGrid.tsx";
 import type {Pos} from "./utils/pos.ts";
-import defaultStructures from "./config/blocks.ts";
+import defaultSchemes from "./config/blocks.ts";
 import Toolbar from "./components/toolbar/Toolbar.tsx";
 import {getStructureCells} from "./utils/structure-utils.ts";
 import BlockSelector from "./components/selector/SchemeSelector.tsx";
@@ -29,10 +29,10 @@ function App() {
         title: 'Selector',
         icon: <FaMousePointer/>,
         onCellClick: cell => {
-            setSelectedBlock(getBlocksMatchingCell(cell));
+            setSelectedStructure(getBlocksMatchingCell(cell));
         },
         onUnselect: () => {
-            setSelectedBlock([])
+            setSelectedStructure([])
         }
     })
     tools.set('rotator', {
@@ -49,7 +49,7 @@ function App() {
         title: 'Placer',
         icon: <FaPlusSquare/>,
         onUnselect: () => {
-            setSelectedStructure(null)
+            setSelectedScheme(null)
         }
     })
 
@@ -58,8 +58,8 @@ function App() {
         setActiveTool(tools.get(tool)!);
     }
 
-    const [selectedStructure, setSelectedStructure] = useState<Scheme | null>(null);
-    const [selectedBlock, setSelectedBlock] = useState<Structure[]>([]);
+    const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
+    const [selectedStructure, setSelectedStructure] = useState<Structure[]>([]);
     const [currentRotation, setCurrentRotation] = useState<Rotation>(0);
 
     const LAYER_DEFS = useMemo(() => [
@@ -73,9 +73,9 @@ function App() {
     });
 
     const layers: Layer[] = useMemo(() =>
-            LAYER_DEFS.map((def: Omit<Layer, 'placedBlocks'>) => ({
+            LAYER_DEFS.map((def: Omit<Layer, 'structures'>) => ({
                 ...def,
-                placedBlocks: allBlocks.present[def.value] || []
+                structures: allBlocks.present[def.value] || []
             })),
         [LAYER_DEFS, allBlocks.present]
     );
@@ -86,7 +86,7 @@ function App() {
 
     // Helper to get structure for a block
     const getStructureForBlock = (b: Structure): Scheme | undefined =>
-        defaultStructures.find((s: Scheme) => s.schemeId === b.schemeId);
+        defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
 
     // Helper to get blocks matching a cell
     const getBlocksMatchingCell = (cell: Pos): Structure[] =>
@@ -108,7 +108,7 @@ function App() {
         setAllBlocks({
             ...allBlocks.present,
             [currentLayer]: currentLayerBlocks.filter((b: Structure) => {
-                const structure = defaultStructures.find((s: Scheme) => s.schemeId === b.schemeId);
+                const structure = defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
                 if (!structure) return true;
                 const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
                 return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
@@ -120,9 +120,9 @@ function App() {
     useHotkeys('ctrl+z', () => undo());
     useHotkeys('ctrl+y', () => redo());
     useHotkeys(['delete', 'backspace'], () => {
-        if (selectedBlock.length > 0) {
-            handleStructureRemove(selectedBlock[0].pos)
-            setSelectedBlock([])
+        if (selectedStructure.length > 0) {
+            handleStructureRemove(selectedStructure[0].pos)
+            setSelectedStructure([])
         }
     });
 
@@ -142,8 +142,8 @@ function App() {
                     const importedBlocks: Record<string, Structure[]> = {};
                     LAYER_DEFS.forEach(def => {
                         const importedLayer = data.layers.find((l: { value: string }) => l.value === def.value);
-                        if (importedLayer?.placedBlocks) {
-                            importedBlocks[def.value] = importedLayer.placedBlocks.map((b: any) => {
+                        if (importedLayer?.structures) {
+                            importedBlocks[def.value] = importedLayer.structures.map((b: any) => {
                                 // Only support [x, y, z] array or explicit x, y, z fields
                                 let x, y, z;
                                 if (Array.isArray(b.pos)) {
@@ -193,13 +193,14 @@ function App() {
         const data = {
             layers: layers.map(layer => ({
                 ...layer,
-                placedBlocks: layer.placedBlocks.map(b => ({
+                structures: layer.structures.map(b => ({
                     ...b,
                     pos: [b.pos.x, b.pos.y, b.pos.z]
                 }))
             }))
         };
         const json = JSON.stringify(data, null, 2);
+        console.log(layers)
         const blob = new Blob([json], {type: "application/json"});
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -232,17 +233,17 @@ function App() {
             />
             <InfiniteGrid
                 activeTool={activeTool}
-                selectedScheme={selectedStructure}
-                selectedStructure={selectedBlock}
+                selectedScheme={selectedScheme}
+                selectedStructure={selectedStructure}
                 currentRotation={currentRotation}
                 placedStructures={currentLayerBlocks}
-                schemes={defaultStructures}
+                schemes={defaultSchemes}
                 onStructurePlace={handleStructurePlace}
                 onStructureRemove={handleStructureRemove}
             />
             <BlockSelector
                 onSchemeSelect={structure => {
-                    setSelectedStructure(structure)
+                    setSelectedScheme(structure)
                     updateActiveTool('placer')
                 }}
                 layers={layers}

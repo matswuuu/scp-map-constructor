@@ -1,7 +1,7 @@
-import type {Structure} from "../utils/pos.ts";
+import type {Structure} from "./Structure.ts";
 
 export interface Layer {
     value: string;
     name: string;
-    placedBlocks: Structure[];
+    structures: Structure[];
 }

@@ -63,13 +63,13 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         const worldZ = (pz - camera.y) / camera.zoom;
 
         return {
-            x: Math.floor(worldX / CELL_SIZE),
+            x: -Math.floor(worldX / CELL_SIZE),
             y: 0,
             z: -Math.floor(worldZ / CELL_SIZE)
         };
     };
 
-    const getSchemeById = useCallback((id: string | null) => schemes.find(s => s.schemeId === id) || null, [schemes]);
+    const getSchemeById = useCallback((id: string | null) => schemes.find(s => s.id === id) || null, [schemes]);
 
     const getOccupiedCells = useCallback(() => {
         const occupiedCells = new Set<string>();
@@ -93,9 +93,7 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         return new GridRenderer(ctx, camera, CELL_SIZE, canvas);
     }, [camera])
 
-    const translate = (parent: Pos,
-                       point: Pos,
-                       rotation: Rotation): Pos => {
+    const translate = (parent: Pos, point: Pos, rotation: Rotation): Pos => {
         point = rotateBlock(point, rotation)
         const worldX = parent.x + point.x;
         const worldZ = parent.z + point.z;
@@ -156,7 +154,7 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
             const {x: pivotX, z: pivotZ} = translate(block.pos, {x: 0, y: 0, z: 0}, currentRotation);
             renderer.drawBlockCell(pivotX, pivotZ, "green");
         });
-    }, [getRenderer, getSchemeById, placedStructures]);
+    }, [currentRotation, getRenderer, getSchemeById, placedStructures]);
 
     const drawSelectedBlocks = useCallback(() => {
         const canvas = canvasRef.current;
@@ -229,7 +227,8 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
         if (canPlaceStructure(selectedScheme, cell.x, cell.z, currentRotation, occupiedCells)) {
             onStructurePlace({
                 pos: {x: cell.x, y: 0, z: cell.z},
-                schemeId: selectedScheme.schemeId,
+                type: selectedScheme.type,
+                schemeId: selectedScheme.id,
                 rotation: currentRotation,
             });
         }
