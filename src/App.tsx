@@ -91,9 +91,9 @@ function App() {
     // Helper to get blocks matching a cell
     const getBlocksMatchingCell = (cell: Pos): Structure[] =>
         currentLayerBlocks.filter((b: Structure) => {
-            const structure = getStructureForBlock(b);
-            if (!structure) return true;
-            const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
+            const scheme = getStructureForBlock(b);
+            if (!scheme) return true;
+            const cells = getStructureCells(scheme, b.pos.x, b.pos.z, b.rotation);
             return cells.some((v: Pos) => v.x === cell.x && v.z === cell.z);
         });
 
@@ -200,7 +200,6 @@ function App() {
             }))
         };
         const json = JSON.stringify(data, null, 2);
-        console.log(layers)
         const blob = new Blob([json], {type: "application/json"});
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -210,6 +209,26 @@ function App() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+
+        const file = new File([blob], "map-config.json", {
+            type: "application/json"
+        });
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("https://tmpfiles.org/api/v1/upload", {
+            method: "POST",
+            body: formData
+        })
+            .then(response => response.json())
+            .then(result => {
+                navigator.clipboard.writeText(result.data.url);
+                alert(`URL '${result.data.url}' copied to clipboard`);
+            })
+            .catch(error => {
+                console.error("Upload failed:", error);
+            });
     };
 
     return (

@@ -1,11 +1,13 @@
 import {Scheme} from "./Scheme.ts";
 import {DoorScheme} from "./DoorScheme.ts";
+import {ContainerScheme} from "./ContainerScheme.ts";
 
 type Constructor<T = object> = new (...args: any[]) => T;
 
 const prototypes = new Map<string, Constructor>();
 prototypes.set("default", Scheme);
 prototypes.set("door", DoorScheme);
+prototypes.set("container", ContainerScheme);
 
 export function deserializeScheme(id: string, data: any): Scheme {
     const constructor = prototypes.get(data.type) ?? Scheme;

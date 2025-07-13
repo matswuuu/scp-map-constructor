@@ -42,19 +42,21 @@ export function rotateOccupiedBlocks(scheme: Scheme,
 }
 
 /**
- * Checks if a structure can be placed at the given position
+ * Checks if a scheme can be placed at the given position
  */
 export function canPlaceStructure(
-    structure: Scheme,
+    scheme: Scheme,
     x: number,
     z: number,
     rotation: Rotation,
     occupiedCells: Set<string>
 ): boolean {
-    const rotatedBlocks = rotateOccupiedBlocks(structure, rotation);
+    if (scheme.allowIntersection) return true;
+
+    const rotatedBlocks = rotateOccupiedBlocks(scheme, rotation);
     for (const block of rotatedBlocks) {
-        const worldX = -x + (block.x);
-        const worldZ = -z + (block.z);
+        const worldX = x + (block.x);
+        const worldZ = z + (block.z);
         const cellKey = `${worldX},${worldZ}`;
         if (occupiedCells.has(cellKey)) {
             return false;
@@ -74,8 +76,8 @@ export function getStructureCells(
 ): Pos[] {
     const rotatedBlocks = rotateOccupiedBlocks(structure, rotation);
     return rotatedBlocks.map(block => ({
-        x: -x + (block.x),
+        x: x + (block.x),
         y: 0,
-        z: -z + (block.z)
+        z: z + (block.z)
     }));
 }
