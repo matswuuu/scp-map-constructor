@@ -1,6 +1,6 @@
 import type {Pos} from './pos.ts';
 import type {Rotation} from "./rotation.ts";
-import type {Scheme} from "../types/scheme/Scheme.ts";
+import type {Scheme} from "../types/Scheme.ts";
 
 /**
  * Rotates a single block coordinate around a pivot

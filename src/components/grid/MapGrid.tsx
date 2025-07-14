@@ -5,8 +5,8 @@ import {GridRenderer} from "./GridRenderer.ts";
 import type {Camera} from "../../utils/camera.ts";
 import type {Tool} from "../toolbar/Tool.ts";
 import type {Rotation} from "../../utils/rotation.ts";
-import type {Scheme} from "../../types/scheme/Scheme.ts";
-import type {Structure} from "../../types/Structure.ts";
+import type {Scheme} from "../../types/Scheme.ts";
+import {Structure} from "../../types/Structure.ts";
 
 const CELL_SIZE = 40;
 
@@ -19,8 +19,8 @@ interface InfiniteGridProps {
     placedStructures: Structure[];
     schemes: Scheme[];
 
-    onStructurePlace: (block: Structure) => void;
-    onStructureRemove: (block: Pos) => void;
+    onStructurePlace: (structure: Structure) => void;
+    onStructureRemove: (pos: Pos) => void;
 }
 
 const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
@@ -225,12 +225,12 @@ const InfinitiveGrid: React.FC<InfiniteGridProps> = ({
 
         const occupiedCells = getOccupiedCells();
         if (canPlaceStructure(selectedScheme, cell.x, cell.z, currentRotation, occupiedCells)) {
-            onStructurePlace({
-                pos: {x: cell.x, y: 0, z: cell.z},
-                type: selectedScheme.type,
-                schemeId: selectedScheme.id,
-                rotation: currentRotation,
-            });
+            onStructurePlace(new Structure(
+                selectedScheme.id,
+                selectedScheme.type,
+                {x: cell.x, y: 0, z: cell.z},
+                currentRotation
+            ));
         }
     }
 

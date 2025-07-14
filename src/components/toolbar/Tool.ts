@@ -1,7 +1,7 @@
 import type {JSX} from "react";
 import type {Pos} from "../../utils/pos.ts";
 
-export type ToolType = 'grabber' | 'selector' | 'rotator' | 'placer';
+export type ToolType = 'grabber' | 'selector' | 'rotator' | 'placer' | 'metadata-editor';
 
 export interface Tool {
     value: ToolType;

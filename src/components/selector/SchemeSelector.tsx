@@ -1,7 +1,7 @@
 import React from 'react';
 import './SchemeSelector.css';
-import defaultSchemes from "../../config/blocks.ts";
-import type {Scheme} from "../../types/scheme/Scheme.ts";
+import defaultSchemes from "../../config/schemes.ts";
+import type {Scheme} from "../../types/Scheme.ts";
 
 interface SchemeSelectorProps {
     onSchemeSelect: (scheme: Scheme) => void;

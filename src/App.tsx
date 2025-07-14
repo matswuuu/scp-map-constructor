@@ -2,20 +2,22 @@ import React, {useCallback, useMemo, useRef, useState} from 'react';
 import './App.css';
 import InfiniteGrid from "./components/grid/MapGrid.tsx";
 import type {Pos} from "./utils/pos.ts";
-import defaultSchemes from "./config/blocks.ts";
+import defaultSchemes from "./config/schemes.ts";
 import Toolbar from "./components/toolbar/Toolbar.tsx";
 import {getStructureCells} from "./utils/structure-utils.ts";
 import BlockSelector from "./components/selector/SchemeSelector.tsx";
 import type {Tool, ToolType} from "./components/toolbar/Tool.ts";
-import {FaMousePointer, FaPlusSquare, FaSyncAlt} from "react-icons/fa";
+import {FaEdit, FaMousePointer, FaPlusSquare, FaSyncAlt} from "react-icons/fa";
 import {FaComputerMouse} from "react-icons/fa6";
 import {useHotkeys} from "react-hotkeys-hook";
 import type {Rotation} from "./utils/rotation.ts";
 import useUndo from "use-undo";
 import type {Layer} from "./types/Layer.ts";
 import {WarnOnPageUnload} from "./components/WarnMessage.tsx";
-import type {Scheme} from "./types/scheme/Scheme.ts";
+import {Scheme} from "./types/Scheme.ts";
 import type {Structure} from "./types/Structure.ts";
+import MetadataEditor from "./components/toolbar/MetadataEditor";
+import "./components/toolbar/MetadataEditor.css";
 
 function App() {
     const tools = new Map<ToolType, Tool>();
@@ -52,6 +54,20 @@ function App() {
             setSelectedScheme(null)
         }
     })
+    tools.set('metadata-editor', {
+        value: 'metadata-editor',
+        title: 'Metadata editor',
+        icon: <FaEdit/>,
+        onCellClick: cell => {
+            const structures = getBlocksMatchingCell(cell);
+            if (structures.length === 0) return;
+            const structure = structures[0];
+            const scheme = defaultSchemes.find(s => s.id === structure.schemeId);
+            if (scheme) {
+                setMetadataEditor({structure, metadata: scheme.metadata});
+            }
+        }
+    })
 
     const [activeTool, setActiveTool] = useState<Tool>(tools.get('selector')!);
     const updateActiveTool = (tool: ToolType) => {
@@ -61,6 +77,8 @@ function App() {
     const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
     const [selectedStructure, setSelectedStructure] = useState<Structure[]>([]);
     const [currentRotation, setCurrentRotation] = useState<Rotation>(0);
+    const [metadataEditor, setMetadataEditor] =
+        useState<{ structure: Structure, metadata: Map<string, any> } | null>(null);
 
     const LAYER_DEFS = useMemo(() => [
         {value: "light-zone", name: "Легкая зона"},
@@ -85,22 +103,22 @@ function App() {
     const currentLayerBlocks = useMemo(() => allBlocks.present[currentLayer] || [], [allBlocks.present, currentLayer]);
 
     // Helper to get structure for a block
-    const getStructureForBlock = (b: Structure): Scheme | undefined =>
-        defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
+    const getScheme = (structure: Structure): Scheme | undefined =>
+        defaultSchemes.find((s: Scheme) => s.id === structure.schemeId);
 
     // Helper to get blocks matching a cell
     const getBlocksMatchingCell = (cell: Pos): Structure[] =>
         currentLayerBlocks.filter((b: Structure) => {
-            const scheme = getStructureForBlock(b);
+            const scheme = getScheme(b);
             if (!scheme) return true;
             const cells = getStructureCells(scheme, b.pos.x, b.pos.z, b.rotation);
             return cells.some((v: Pos) => v.x === cell.x && v.z === cell.z);
         });
 
-    const handleStructurePlace = useCallback((block: Structure) => {
+    const handleStructurePlace = useCallback((structure: Structure) => {
         setAllBlocks({
             ...allBlocks.present,
-            [currentLayer]: [...currentLayerBlocks, block]
+            [currentLayer]: [...currentLayerBlocks, structure]
         });
     }, [allBlocks.present, setAllBlocks, currentLayer, currentLayerBlocks]);
 
@@ -157,7 +175,8 @@ function App() {
                                     y = b.y;
                                     z = b.z;
                                 } else {
-                                    throw new Error('Each block must have either a coords array or explicit x, y, z fields.');
+                                    throw new Error(
+                                        'Each block must have either a coords array or explicit x, y, z fields.');
                                 }
                                 return {
                                     ...b,
@@ -193,12 +212,18 @@ function App() {
         const data = {
             layers: layers.map(layer => ({
                 ...layer,
-                structures: layer.structures.map(b => ({
-                    ...b,
-                    pos: [b.pos.x, b.pos.y, b.pos.z]
-                }))
+                structures: layer.structures.map(b => {
+                    const metaObj = b.metadata ? Object.fromEntries(b.metadata) : {};
+                    return {
+                        ...b,
+                        ...metaObj,
+                        pos: [b.pos.x, b.pos.y, b.pos.z],
+                        metadata: undefined
+                    };
+                })
             }))
         };
+
         const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], {type: "application/json"});
         const url = URL.createObjectURL(blob);
@@ -269,6 +294,38 @@ function App() {
                 currentLayer={currentLayer}
                 onLayerChange={setCurrentLayer}
             />
+            {metadataEditor && (
+                <MetadataEditor
+                    structure={metadataEditor.structure}
+                    metadata={metadataEditor.metadata}
+                    onChange={(structure, key, value) => {
+                        structure.metadata.set(key, value);
+
+                        setAllBlocks({
+                            ...allBlocks.present,
+                            [currentLayer]: currentLayerBlocks.map(b => {
+                                if (b === metadataEditor.structure) {
+                                    const newMetadata = new Map(b.metadata || []);
+                                    newMetadata.set(key, value);
+                                    return { ...b, metadata: newMetadata };
+                                }
+                                return b;
+                            })
+                        });
+                        setMetadataEditor(prev => prev && ({
+                            ...prev,
+                            structure: {
+                                ...prev.structure,
+                                metadata: new Map([
+                                    ...(prev.structure.metadata || []),
+                                    [key, value]
+                                ])
+                            }
+                        }));
+                    }}
+                    onClose={() => setMetadataEditor(null)}
+                />
+            )}
         </div>
     );
 }

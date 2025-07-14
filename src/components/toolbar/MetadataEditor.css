@@ -1,0 +1,90 @@
+.metadata-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(24, 26, 32, 0.85); /* Telegram dark overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.metadata-editor-content {
+    background: var(--tg-color-bg-alt);
+    color: var(--tg-color-text);
+    padding: var(--tg-spacing-lg);
+    border-radius: var(--tg-radius);
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: var(--tg-shadow);
+    font-family: var(--tg-font-family);
+    font-size: var(--tg-font-size);
+    border: 1px solid var(--tg-color-border);
+}
+
+.metadata-editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--tg-spacing-md);
+}
+
+.metadata-editor-key {
+    padding: var(--tg-spacing-sm);
+    border: 1px solid var(--tg-color-border);
+    font-weight: var(--tg-font-weight-bold);
+    background: var(--tg-color-bg-sidebar);
+    color: var(--tg-color-text);
+    font-size: var(--tg-font-size);
+    border-radius: var(--tg-radius-sm) 0 0 var(--tg-radius-sm);
+}
+
+.metadata-editor-value {
+    padding: var(--tg-spacing-sm);
+    border: 1px solid var(--tg-color-border);
+    background: var(--tg-color-bg-alt);
+    color: var(--tg-color-text);
+    border-radius: 0 var(--tg-radius-sm) var(--tg-radius-sm) 0;
+}
+
+.metadata-editor-value input {
+    width: 100%;
+    padding: var(--tg-spacing-xs) var(--tg-spacing-sm);
+    border-radius: var(--tg-radius-sm);
+    border: 1px solid var(--tg-color-border);
+    font-size: var(--tg-font-size);
+    color: var(--tg-color-text);
+    background: var(--tg-color-bg);
+    transition: border-color var(--tg-transition);
+}
+
+.metadata-editor-value input:focus {
+    outline: none;
+    border-color: var(--tg-color-primary);
+    box-shadow: 0 0 0 2px rgba(34, 158, 217, 0.15);
+}
+
+.metadata-editor-actions {
+    margin-top: var(--tg-spacing-md);
+    text-align: right;
+}
+
+.metadata-editor-actions button {
+    padding: var(--tg-spacing-xs) var(--tg-spacing-md);
+    border-radius: var(--tg-radius-sm);
+    border: none;
+    font-size: var(--tg-font-size);
+    font-family: var(--tg-font-family);
+    background: var(--tg-color-primary);
+    color: #fff;
+    margin-left: var(--tg-spacing-sm);
+    cursor: pointer;
+    font-weight: var(--tg-font-weight-bold);
+    box-shadow: 0 1px 3px rgba(34, 158, 217, 0.10);
+    transition: background var(--tg-transition);
+}
+
+.metadata-editor-actions button:hover {
+    background: var(--tg-color-primary-dark);
+}
