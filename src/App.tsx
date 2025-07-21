@@ -210,7 +210,7 @@ function App() {
     const handleExport = () => {
         // Export coordinates as [x, y, z] arrays
         const data = {
-            schemePath: "classpath:///configs/rooms/test-scheme.json",
+            schemePath: "classpath:///config/rooms/test-scheme.json",
             layers: layers.map(layer => ({
                 ...layer,
                 structures: layer.structures.map(b => {
