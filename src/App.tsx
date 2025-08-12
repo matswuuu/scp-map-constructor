@@ -31,7 +31,7 @@ function App() {
         title: 'Selector',
         icon: <FaMousePointer/>,
         onCellClick: cell => {
-            setSelectedStructure(getBlocksMatchingCell(cell));
+            setSelectedStructure(getBlocksMatchingPos(cell));
         },
         onUnselect: () => {
             setSelectedStructure([])
@@ -42,7 +42,7 @@ function App() {
         title: 'Rotator - CTRL + R',
         icon: <FaSyncAlt/>,
         onCellClick: cell => {
-            getBlocksMatchingCell(cell)
+            getBlocksMatchingPos(cell)
                 .forEach((v: Structure) => v.rotation = (v.rotation + 90) % 360 as Rotation);
         }
     })
@@ -59,7 +59,7 @@ function App() {
         title: 'Metadata editor',
         icon: <FaEdit/>,
         onCellClick: cell => {
-            const structures = getBlocksMatchingCell(cell);
+            const structures = getBlocksMatchingPos(cell);
             if (structures.length === 0) return;
             const structure = structures[0];
             const scheme = defaultSchemes.find(s => s.id === structure.schemeId);
@@ -107,15 +107,20 @@ function App() {
         defaultSchemes.find((s: Scheme) => s.id === structure.schemeId);
 
     // Helper to get blocks matching a cell
-    const getBlocksMatchingCell = (cell: Pos): Structure[] =>
+    const getBlocksMatchingPos = (pos: Pos): Structure[] =>
         currentLayerBlocks.filter((b: Structure) => {
             const scheme = getScheme(b);
             if (!scheme) return true;
             const cells = getStructureCells(scheme, b.pos.x, b.pos.z, b.rotation);
-            return cells.some((v: Pos) => v.x === cell.x && v.z === cell.z);
+            return cells.some((v: Pos) => v.x === pos.x && v.z === pos.z);
         });
 
     const handleStructurePlace = useCallback((structure: Structure) => {
+        const parent = getBlocksMatchingPos(structure.pos)
+        if (parent.length > 0) { // Used with structures, that allows intersection
+            structure.rotation = parent[0].rotation;
+        }
+
         setAllBlocks({
             ...allBlocks.present,
             [currentLayer]: [...currentLayerBlocks, structure]

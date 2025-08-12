@@ -66,15 +66,15 @@ export function canPlaceStructure(
 }
 
 /**
- * Gets all cells that a structure would occupy
+ * Gets all cells that a scheme would occupy
  */
 export function getStructureCells(
-    structure: Scheme,
+    scheme: Scheme,
     x: number,
     z: number,
     rotation: Rotation
 ): Pos[] {
-    const rotatedBlocks = rotateOccupiedBlocks(structure, rotation);
+    const rotatedBlocks = rotateOccupiedBlocks(scheme, rotation);
     return rotatedBlocks.map(block => ({
         x: x + (block.x),
         y: 0,
