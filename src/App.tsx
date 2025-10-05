@@ -213,9 +213,14 @@ function App() {
     }
 
     const handleExport = () => {
-        // Export coordinates as [x, y, z] arrays
         const data = {
-            schemePath: "classpath:///config/rooms/test-scheme.json",
+            data: {
+                schemeData: {
+                    name: "test",
+                    path: "classpath:///config/rooms/test-scheme.json",
+                    previewImagePath: "https://storage.c7x.dev/matswuuu/scp/v0.0.1/resources/textures/map/test-map-preview.png"
+                },
+            },
             layers: layers.map(layer => ({
                 ...layer,
                 structures: layer.structures.map(b => {

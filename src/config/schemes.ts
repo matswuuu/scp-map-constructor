@@ -18,6 +18,7 @@ function deserializeScheme(id: string, data: any): Scheme {
 }
 
 const defaultSchemes: Scheme[] = Object.entries(configData)
+    .sort((o1, o2) => o1[0].localeCompare(o2[0]))
     .map(([key, value]) => deserializeScheme(key, value));
 
 export default defaultSchemes;
