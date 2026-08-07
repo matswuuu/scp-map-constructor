@@ -17,6 +17,7 @@ import {Scheme} from "./types/Scheme.ts";
 import type {Structure} from "./types/Structure.ts";
 import MetadataEditor from "./components/toolbar/MetadataEditor";
 import "./components/toolbar/MetadataEditor.css";
+import StructureCounter from "./components/counter/StructureCounter.tsx";
 
 function App() {
     const tools = new Map<ToolType, Tool>();
@@ -260,6 +261,7 @@ function App() {
                     updateActiveTool('placer')
                 }}
             />
+            <StructureCounter structures={structures} schemes={defaultSchemes}/>
             {metadataEditor && (
                 <MetadataEditor
                     structure={metadataEditor.structure}
