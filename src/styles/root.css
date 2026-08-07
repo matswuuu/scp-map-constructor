@@ -1,0 +1,58 @@
+:root {
+    --color-bg-default: #eee;
+    --color-bg-hover: #ddd;
+    --color-bg-active: #007bff;
+    --color-text-default: #000;
+    --color-text-active: #000;
+    --color-border-default: #ccc;
+    --border-radius: 4px;
+    --transition-speed: 0.2s;
+    --font-size: 14px;
+    --spacing: 8px;
+    --gap: 6px;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light dark;
+    color: #242424;
+    background-color: #242424;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Telegram-inspired dark color palette */
+    --tg-color-primary: #229ED9;
+    --tg-color-primary-dark: #1976b2;
+    --tg-color-accent: #41bdfc;
+    --tg-color-bg: #181a20;
+    --tg-color-bg-alt: #232634;
+    --tg-color-bg-sidebar: #20222b;
+    --tg-color-border: #232634;
+    --tg-color-text: #e6eaf0;
+    --tg-color-text-secondary: #8a99b7;
+    --tg-color-shadow: 0 2px 8px rgba(34, 158, 217, 0.10);
+
+    /* Typography */
+    --tg-font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    --tg-font-size: 15px;
+    --tg-font-size-small: 13px;
+    --tg-font-size-large: 18px;
+    --tg-font-weight: 400;
+    --tg-font-weight-bold: 600;
+
+    /* Spacing */
+    --tg-spacing-xs: 4px;
+    --tg-spacing-sm: 8px;
+    --tg-spacing-md: 16px;
+    --tg-spacing-lg: 24px;
+    --tg-spacing-xl: 32px;
+
+    /* Border radius and shadow */
+    --tg-radius: 12px;
+    --tg-radius-sm: 6px;
+    --tg-shadow: 0 2px 8px rgba(34, 158, 217, 0.10);
+
+    /* Transition */
+    --tg-transition: 0.18s cubic-bezier(.4, 0, .2, 1);
+} 
