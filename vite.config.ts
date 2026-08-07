@@ -5,14 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
     base: '/',
     plugins: [
-        react({
-            babel: {
-                plugins: [
-                    ['@babel/plugin-proposal-decorators', { legacy: true }],
-                    ['@babel/plugin-proposal-class-properties', { loose: true }],
-                    ['@babel/plugin-transform-private-methods', { loose: true }]
-                ]
-            }
-        })
+        react()
     ],
 })
