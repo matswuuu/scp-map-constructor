@@ -221,18 +221,13 @@ function App() {
                     previewImagePath: "https://storage.c7x.dev/matswuuu/scp/v0.0.1/resources/textures/map/test-map-preview.png"
                 },
             },
-            layers: layers.map(layer => ({
-                ...layer,
-                structures: layer.structures.map(b => {
-                    const metaObj = b.metadata ? Object.fromEntries(b.metadata) : {};
-                    return {
-                        ...b,
-                        ...metaObj,
-                        pos: [b.pos.x, b.pos.y, b.pos.z],
-                        metadata: undefined
-                    };
-                })
-            }))
+            sourceStructures: layers.flatMap(layer =>
+                layer.structures.map(({ metadata, ...b }) => ({
+                    ...b,
+                    ...(metadata ? Object.fromEntries(metadata) : {}),
+                    pos: [b.pos.x, b.pos.y, b.pos.z],
+                }))
+            )
         };
 
         const json = JSON.stringify(data, null, 2);
