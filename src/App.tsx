@@ -86,6 +86,8 @@ function App() {
 
     const structures = useMemo(() => allBlocks.present, [allBlocks.present]);
 
+    const placedIds = useMemo(() => new Set(structures.map(s => s.schemeId)), [structures]);
+
     // Helper to get structure for a block
     const getScheme = (structure: Structure): Scheme | undefined =>
         defaultSchemes.find((s: Scheme) => s.id === structure.schemeId);
@@ -268,6 +270,7 @@ function App() {
                     setSelectedScheme(structure)
                     updateActiveTool('placer')
                 }}
+                placedIds={placedIds}
             />
             <StructureCounter structures={structures} schemes={defaultSchemes}/>
             {missingSchemes && (

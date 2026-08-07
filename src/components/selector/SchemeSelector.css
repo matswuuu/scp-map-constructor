@@ -121,4 +121,15 @@
 
 .pointer-tool__delete:hover {
     background: #d32f2f;
+}
+
+.block-item--placed {
+    background-color: rgba(76, 175, 80, 0.18);
+    border: 1px solid #2e7d32;
+    color: #81c784;
+}
+
+.block-item--placed:hover {
+    background-color: rgba(76, 175, 80, 0.28);
+    border-color: #43a047;
 } 
