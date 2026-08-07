@@ -12,7 +12,6 @@ import {FaComputerMouse} from "react-icons/fa6";
 import {useHotkeys} from "react-hotkeys-hook";
 import type {Rotation} from "./utils/rotation.ts";
 import useUndo from "use-undo";
-import type {Layer} from "./types/Layer.ts";
 import {WarnOnPageUnload} from "./components/WarnMessage.tsx";
 import {Scheme} from "./types/Scheme.ts";
 import type {Structure} from "./types/Structure.ts";
@@ -80,27 +79,9 @@ function App() {
     const [metadataEditor, setMetadataEditor] =
         useState<{ structure: Structure, metadata: Map<string, any> } | null>(null);
 
-    const LAYER_DEFS = useMemo(() => [
-        {value: "light-zone", name: "Легкая зона"},
-        {value: "hard-zone", name: "Тяжелая зона"},
-        {value: "office-zone", name: "Офисы"}
-    ], []);
+    const [allBlocks, {set: setAllBlocks, undo, redo}] = useUndo<Structure[]>([]);
 
-    const [allBlocks, {set: setAllBlocks, undo, redo}] = useUndo<Record<string, Structure[]>>({
-        ...Object.fromEntries(LAYER_DEFS.map((def) => [def.value, []]))
-    });
-
-    const layers: Layer[] = useMemo(() =>
-            LAYER_DEFS.map((def: Omit<Layer, 'structures'>) => ({
-                ...def,
-                structures: allBlocks.present[def.value] || []
-            })),
-        [LAYER_DEFS, allBlocks.present]
-    );
-
-    const [currentLayer, setCurrentLayer] = useState<string>(LAYER_DEFS[0].value);
-
-    const currentLayerBlocks = useMemo(() => allBlocks.present[currentLayer] || [], [allBlocks.present, currentLayer]);
+    const structures = useMemo(() => allBlocks.present, [allBlocks.present]);
 
     // Helper to get structure for a block
     const getScheme = (structure: Structure): Scheme | undefined =>
@@ -108,7 +89,7 @@ function App() {
 
     // Helper to get blocks matching a cell
     const getBlocksMatchingPos = (pos: Pos): Structure[] =>
-        currentLayerBlocks.filter((b: Structure) => {
+        structures.filter((b: Structure) => {
             const scheme = getScheme(b);
             if (!scheme) return true;
             const cells = getStructureCells(scheme, b.pos.x, b.pos.z, b.rotation);
@@ -121,23 +102,17 @@ function App() {
             structure.rotation = parent[0].rotation;
         }
 
-        setAllBlocks({
-            ...allBlocks.present,
-            [currentLayer]: [...currentLayerBlocks, structure]
-        });
-    }, [allBlocks.present, setAllBlocks, currentLayer, currentLayerBlocks]);
+        setAllBlocks([...structures, structure]);
+    }, [structures, setAllBlocks]);
 
     const handleStructureRemove = useCallback((block: Pos) => {
-        setAllBlocks({
-            ...allBlocks.present,
-            [currentLayer]: currentLayerBlocks.filter((b: Structure) => {
-                const structure = defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
-                if (!structure) return true;
-                const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
-                return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
-            })
-        });
-    }, [allBlocks.present, setAllBlocks, currentLayer, currentLayerBlocks]);
+        setAllBlocks(structures.filter((b: Structure) => {
+            const structure = defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
+            if (!structure) return true;
+            const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
+            return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
+        }));
+    }, [structures, setAllBlocks]);
 
     useHotkeys('ctrl+r', () => setCurrentRotation((currentRotation + 90) % 360 as Rotation));
     useHotkeys('ctrl+z', () => undo());
@@ -160,45 +135,35 @@ function App() {
             try {
                 const json = e.target?.result as string;
                 const data = JSON.parse(json);
-                if (data && Array.isArray(data.layers)) {
-                    // Only import blocks for known layers
-                    const importedBlocks: Record<string, Structure[]> = {};
-                    LAYER_DEFS.forEach(def => {
-                        const importedLayer = data.layers.find((l: { value: string }) => l.value === def.value);
-                        if (importedLayer?.structures) {
-                            importedBlocks[def.value] = importedLayer.structures.map((b: any) => {
-                                // Only support [x, y, z] array or explicit x, y, z fields
-                                let x, y, z;
-                                if (Array.isArray(b.pos)) {
-                                    [x, y, z] = b.pos;
-                                } else if (
-                                    typeof b.x === 'number' &&
-                                    typeof b.y === 'number' &&
-                                    typeof b.z === 'number'
-                                ) {
-                                    x = b.x;
-                                    y = b.y;
-                                    z = b.z;
-                                } else {
-                                    throw new Error(
-                                        'Each block must have either a coords array or explicit x, y, z fields.');
-                                }
-                                return {
-                                    ...b,
-                                    pos: {
-                                        x: x,
-                                        y: y,
-                                        z: z,
-                                    }
-                                };
-                            });
+                if (data && Array.isArray(data.structures)) {
+                    setAllBlocks(data.structures.map((b: any) => {
+                        // Only support [x, y, z] array or explicit x, y, z fields
+                        let x, y, z;
+                        if (Array.isArray(b.pos)) {
+                            [x, y, z] = b.pos;
+                        } else if (
+                            typeof b.x === 'number' &&
+                            typeof b.y === 'number' &&
+                            typeof b.z === 'number'
+                        ) {
+                            x = b.x;
+                            y = b.y;
+                            z = b.z;
                         } else {
-                            importedBlocks[def.value] = [];
+                            throw new Error(
+                                'Each block must have either a coords array or explicit x, y, z fields.');
                         }
-                    });
-                    setAllBlocks(importedBlocks);
+                        return {
+                            ...b,
+                            pos: {
+                                x: x,
+                                y: y,
+                                z: z,
+                            }
+                        };
+                    }));
                 } else {
-                    alert('Invalid file format: missing layers array');
+                    alert('Invalid file format: missing structures array');
                 }
             } catch (err) {
                 console.error(err);
@@ -221,13 +186,11 @@ function App() {
                     previewImagePath: "https://storage.c7x.dev/matswuuu/scp/v0.0.1/resources/textures/map/test-map-preview.png"
                 },
             },
-            sourceStructures: layers.flatMap(layer =>
-                layer.structures.map(({ metadata, ...b }) => ({
-                    ...b,
-                    ...(metadata ? Object.fromEntries(metadata) : {}),
-                    pos: [b.pos.x, b.pos.y, b.pos.z],
-                }))
-            )
+            sourceStructures: structures.map(({ metadata, ...b }) => ({
+                ...b,
+                ...(metadata ? Object.fromEntries(metadata) : {}),
+                pos: [b.pos.x, b.pos.y, b.pos.z],
+            }))
         };
 
         const json = JSON.stringify(data, null, 2);
@@ -286,7 +249,7 @@ function App() {
                 selectedScheme={selectedScheme}
                 selectedStructure={selectedStructure}
                 currentRotation={currentRotation}
-                placedStructures={currentLayerBlocks}
+                placedStructures={structures}
                 schemes={defaultSchemes}
                 onStructurePlace={handleStructurePlace}
                 onStructureRemove={handleStructureRemove}
@@ -296,9 +259,6 @@ function App() {
                     setSelectedScheme(structure)
                     updateActiveTool('placer')
                 }}
-                layers={layers}
-                currentLayer={currentLayer}
-                onLayerChange={setCurrentLayer}
             />
             {metadataEditor && (
                 <MetadataEditor
@@ -307,17 +267,14 @@ function App() {
                     onChange={(structure, key, value) => {
                         structure.metadata.set(key, value);
 
-                        setAllBlocks({
-                            ...allBlocks.present,
-                            [currentLayer]: currentLayerBlocks.map(b => {
-                                if (b === metadataEditor.structure) {
-                                    const newMetadata = new Map(b.metadata || []);
-                                    newMetadata.set(key, value);
-                                    return { ...b, metadata: newMetadata };
-                                }
-                                return b;
-                            })
-                        });
+                        setAllBlocks(structures.map(b => {
+                            if (b === metadataEditor.structure) {
+                                const newMetadata = new Map(b.metadata || []);
+                                newMetadata.set(key, value);
+                                return {...b, metadata: newMetadata};
+                            }
+                            return b;
+                        }));
                         setMetadataEditor(prev => prev && ({
                             ...prev,
                             structure: {
