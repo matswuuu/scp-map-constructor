@@ -18,6 +18,7 @@ import type {Structure} from "./types/Structure.ts";
 import MetadataEditor from "./components/toolbar/MetadataEditor";
 import "./components/toolbar/MetadataEditor.css";
 import StructureCounter from "./components/counter/StructureCounter.tsx";
+import MissingStructuresModal from "./components/notification/MissingStructuresModal.tsx";
 
 function App() {
     const tools = new Map<ToolType, Tool>();
@@ -79,6 +80,7 @@ function App() {
     const [currentRotation, setCurrentRotation] = useState<Rotation>(0);
     const [metadataEditor, setMetadataEditor] =
         useState<{ structure: Structure, metadata: Map<string, any> } | null>(null);
+    const [missingSchemes, setMissingSchemes] = useState<string[] | null>(null);
 
     const [allBlocks, {set: setAllBlocks, undo, redo}] = useUndo<Structure[]>([]);
 
@@ -205,6 +207,12 @@ function App() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
+        const placedIds = new Set(structures.map(s => s.schemeId));
+        const missing = defaultSchemes.map(s => s.id).filter(id => !placedIds.has(id));
+        if (missing.length > 0) {
+            setMissingSchemes(missing);
+        }
+
         const file = new File([blob], "map-config.json", {
             type: "application/json"
         });
@@ -262,6 +270,12 @@ function App() {
                 }}
             />
             <StructureCounter structures={structures} schemes={defaultSchemes}/>
+            {missingSchemes && (
+                <MissingStructuresModal
+                    missing={missingSchemes}
+                    onClose={() => setMissingSchemes(null)}
+                />
+            )}
             {metadataEditor && (
                 <MetadataEditor
                     structure={metadataEditor.structure}
