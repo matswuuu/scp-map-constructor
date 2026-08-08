@@ -142,8 +142,9 @@ function App() {
             try {
                 const json = e.target?.result as string;
                 const data = JSON.parse(json);
-                if (data && Array.isArray(data.structures)) {
-                    setAllBlocks(data.structures.map((b: any) => {
+                if (data && Array.isArray(data.sourceStructures)) {
+                    const schemeById = new Map(schemes.map(s => [s.id, s]));
+                    setAllBlocks(data.sourceStructures.map((b: any) => {
                         // Only support [x, y, z] array or explicit x, y, z fields
                         let x, y, z;
                         if (Array.isArray(b.pos)) {
@@ -162,6 +163,7 @@ function App() {
                         }
                         return {
                             ...b,
+                            type: schemeById.get(b.schemeId)?.type ?? b.type,
                             pos: {
                                 x: x,
                                 y: y,

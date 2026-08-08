@@ -36,8 +36,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         key={tool.value}
                         title={tool.title}
                         onClick={() => {
-                            const t = tools.find(v => v.value === activeTool.value);
-                            t?.onUnselect?.();
+                            tools.forEach(t => t.onUnselect?.());
                             onSelectTool(tool.value)
                         }}
                         className={`toolbar-button ${tool.value === activeTool.value ? 'active' : ''}`}
