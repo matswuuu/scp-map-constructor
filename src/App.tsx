@@ -2,7 +2,7 @@ import React, {useCallback, useMemo, useRef, useState} from 'react';
 import './App.css';
 import InfiniteGrid from "./components/grid/MapGrid.tsx";
 import type {Pos} from "./utils/pos.ts";
-import defaultSchemes from "./config/schemes.ts";
+import {useSchemes} from "./hooks/useSchemes.ts";
 import Toolbar from "./components/toolbar/Toolbar.tsx";
 import {getStructureCells} from "./utils/structure-utils.ts";
 import BlockSelector from "./components/selector/SchemeSelector.tsx";
@@ -21,6 +21,8 @@ import StructureCounter from "./components/counter/StructureCounter.tsx";
 import MissingStructuresModal from "./components/notification/MissingStructuresModal.tsx";
 
 function App() {
+    const {schemes, loading, error, retry} = useSchemes();
+
     const tools = new Map<ToolType, Tool>();
     tools.set('grabber', {
         value: 'grabber',
@@ -63,7 +65,7 @@ function App() {
             const structures = getBlocksMatchingPos(cell);
             if (structures.length === 0) return;
             const structure = structures[0];
-            const scheme = defaultSchemes.find(s => s.id === structure.schemeId);
+            const scheme = schemes.find(s => s.id === structure.schemeId);
             if (scheme) {
                 setMetadataEditor({structure, metadata: scheme.metadata});
             }
@@ -90,7 +92,7 @@ function App() {
 
     // Helper to get structure for a block
     const getScheme = (structure: Structure): Scheme | undefined =>
-        defaultSchemes.find((s: Scheme) => s.id === structure.schemeId);
+        schemes.find((s: Scheme) => s.id === structure.schemeId);
 
     // Helper to get blocks matching a cell
     const getBlocksMatchingPos = (pos: Pos): Structure[] =>
@@ -108,16 +110,16 @@ function App() {
         }
 
         setAllBlocks([...structures, structure]);
-    }, [structures, setAllBlocks]);
+    }, [structures, setAllBlocks, schemes]);
 
     const handleStructureRemove = useCallback((block: Pos) => {
         setAllBlocks(structures.filter((b: Structure) => {
-            const structure = defaultSchemes.find((s: Scheme) => s.id === b.schemeId);
+            const structure = schemes.find((s: Scheme) => s.id === b.schemeId);
             if (!structure) return true;
             const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
             return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
         }));
-    }, [structures, setAllBlocks]);
+    }, [structures, setAllBlocks, schemes]);
 
     useHotkeys('ctrl+r', () => setCurrentRotation((currentRotation + 90) % 360 as Rotation));
     useHotkeys('ctrl+z', () => undo());
@@ -210,7 +212,7 @@ function App() {
         URL.revokeObjectURL(url);
 
         const placedIds = new Set(structures.map(s => s.schemeId));
-        const missing = defaultSchemes.map(s => s.id).filter(id => !placedIds.has(id));
+        const missing = schemes.map(s => s.id).filter(id => !placedIds.has(id));
         if (missing.length > 0) {
             setMissingSchemes(missing);
         }
@@ -248,6 +250,14 @@ function App() {
 
             <WarnOnPageUnload/>
 
+            {loading && <div className="app-overlay">Loading schemes...</div>}
+            {error && (
+                <div className="app-overlay">
+                    <div>{error}</div>
+                    <button onClick={retry}>Retry</button>
+                </div>
+            )}
+
             <Toolbar
                 activeTool={activeTool}
                 onSelectTool={updateActiveTool}
@@ -261,7 +271,7 @@ function App() {
                 selectedStructure={selectedStructure}
                 currentRotation={currentRotation}
                 placedStructures={structures}
-                schemes={defaultSchemes}
+                schemes={schemes}
                 onStructurePlace={handleStructurePlace}
                 onStructureRemove={handleStructureRemove}
             />
@@ -271,8 +281,9 @@ function App() {
                     updateActiveTool('placer')
                 }}
                 placedIds={placedIds}
+                schemes={schemes}
             />
-            <StructureCounter structures={structures} schemes={defaultSchemes}/>
+            <StructureCounter structures={structures} schemes={schemes}/>
             {missingSchemes && (
                 <MissingStructuresModal
                     missing={missingSchemes}
