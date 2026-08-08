@@ -4,7 +4,7 @@ import InfiniteGrid from "./components/grid/MapGrid.tsx";
 import type {Pos} from "./utils/pos.ts";
 import {useSchemes} from "./hooks/useSchemes.ts";
 import Toolbar from "./components/toolbar/Toolbar.tsx";
-import {getStructureCells} from "./utils/structure-utils.ts";
+import {buildCellIndex, cellKey} from "./utils/structure-utils.ts";
 import BlockSelector from "./components/selector/SchemeSelector.tsx";
 import type {Tool, ToolType} from "./components/toolbar/Tool.ts";
 import {FaEdit, FaMousePointer, FaPlusSquare, FaSyncAlt} from "react-icons/fa";
@@ -90,18 +90,25 @@ function App() {
 
     const placedIds = useMemo(() => new Set(structures.map(s => s.schemeId)), [structures]);
 
-    // Helper to get structure for a block
-    const getScheme = (structure: Structure): Scheme | undefined =>
-        schemes.find((s: Scheme) => s.id === structure.schemeId);
+    const schemeById = useMemo(() => new Map(schemes.map(s => [s.id, s])), [schemes]);
+
+    const cellIndex = useMemo(
+        () => buildCellIndex(structures, schemeById),
+        [structures, schemeById]
+    );
+
+    // Structures referencing unknown schemes match every cell (legacy import behavior)
+    const orphanStructures = useMemo(
+        () => structures.filter(b => !schemeById.has(b.schemeId)),
+        [structures, schemeById]
+    );
 
     // Helper to get blocks matching a cell
-    const getBlocksMatchingPos = (pos: Pos): Structure[] =>
-        structures.filter((b: Structure) => {
-            const scheme = getScheme(b);
-            if (!scheme) return true;
-            const cells = getStructureCells(scheme, b.pos.x, b.pos.z, b.rotation);
-            return cells.some((v: Pos) => v.x === pos.x && v.z === pos.z);
-        });
+    const getBlocksMatchingPos = useCallback((pos: Pos): Structure[] => {
+        const hit = cellIndex.get(cellKey(pos.x, pos.z)) ?? [];
+        if (orphanStructures.length === 0) return hit;
+        return hit.length ? [...hit, ...orphanStructures] : [...orphanStructures];
+    }, [cellIndex, orphanStructures]);
 
     const handleStructurePlace = useCallback((structure: Structure) => {
         const parent = getBlocksMatchingPos(structure.pos)
@@ -110,16 +117,14 @@ function App() {
         }
 
         setAllBlocks([...structures, structure]);
-    }, [structures, setAllBlocks, schemes]);
+    }, [structures, setAllBlocks, getBlocksMatchingPos]);
 
     const handleStructureRemove = useCallback((block: Pos) => {
-        setAllBlocks(structures.filter((b: Structure) => {
-            const structure = schemes.find((s: Scheme) => s.id === b.schemeId);
-            if (!structure) return true;
-            const cells = getStructureCells(structure, b.pos.x, b.pos.z, b.rotation);
-            return !cells.some((cell: Pos) => cell.x === block.x && cell.z === block.z);
-        }));
-    }, [structures, setAllBlocks, schemes]);
+        const targets = cellIndex.get(cellKey(block.x, block.z));
+        if (!targets || targets.length === 0) return;
+        const targetSet = new Set(targets);
+        setAllBlocks(structures.filter(b => !targetSet.has(b)));
+    }, [structures, cellIndex, setAllBlocks]);
 
     useHotkeys('ctrl+r', () => setCurrentRotation((currentRotation + 90) % 360 as Rotation));
     useHotkeys('ctrl+z', () => undo());
@@ -274,6 +279,7 @@ function App() {
                 currentRotation={currentRotation}
                 placedStructures={structures}
                 schemes={schemes}
+                cellIndex={cellIndex}
                 onStructurePlace={handleStructurePlace}
                 onStructureRemove={handleStructureRemove}
             />

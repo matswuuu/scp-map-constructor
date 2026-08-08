@@ -18,62 +18,81 @@ export class GridRenderer {
         this.canvas = canvas;
     }
 
+    /**
+     * Applies the camera transform once for the whole frame.
+     * All drawing methods below assume world coordinates.
+     */
+    beginFrame() {
+        const ctx = this.context;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.save();
+        ctx.translate(this.camera.x, this.camera.y);
+        ctx.scale(this.camera.zoom, this.camera.zoom);
+    }
+
+    endFrame() {
+        this.context.restore();
+    }
+
     drawGridLines(startX: number, endX: number, startY: number, endY: number) {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.context.save();
+        const ctx = this.context;
+        const cs = this.cellSize;
 
-        this.#translate()
+        ctx.strokeStyle = '#8d709c';
+        ctx.lineWidth = 1 / this.camera.zoom;
+        ctx.beginPath();
 
-        this.context.strokeStyle = '#8d709c';
-        this.context.lineWidth = 1 / this.camera.zoom;
-
-        const firstX = Math.floor(startX / this.cellSize) * this.cellSize;
-        for (let x = firstX; x < endX; x += this.cellSize) {
-            this.context.beginPath();
-            this.context.moveTo(x, startY);
-            this.context.lineTo(x, endY);
-            this.context.stroke();
+        const firstX = Math.floor(startX / cs) * cs;
+        for (let x = firstX; x < endX; x += cs) {
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
         }
 
-        const firstY = Math.floor(startY / this.cellSize) * this.cellSize;
-        for (let y = firstY; y < endY; y += this.cellSize) {
-            this.context.beginPath();
-            this.context.moveTo(startX, y);
-            this.context.lineTo(endX, y);
-            this.context.stroke();
+        const firstY = Math.floor(startY / cs) * cs;
+        for (let y = firstY; y < endY; y += cs) {
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
         }
 
-        this.context.restore();
-
-        // Mid-point
-        this.drawOutlineCell(0, 0, 'red')
+        ctx.stroke();
     }
 
-    drawBlockCell(x: number, z: number, color: string) {
-        this.context.save();
-        this.#translate();
-        this.context.globalAlpha = 0.75;
-        this.context.fillStyle = color;
-        this.context.strokeStyle = '#333';
-        this.context.lineWidth = 1 / this.camera.zoom;
-        this.context.fillRect(-x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
+    beginFill(color: string) {
+        const ctx = this.context;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.75;
+    }
+
+    fillCell(x: number, z: number) {
+        const cs = this.cellSize;
+        this.context.fillRect(-x * cs, -z * cs, cs, cs);
+    }
+
+    endFill() {
         this.context.globalAlpha = 1;
-        this.context.restore();
     }
 
-    drawOutlineCell(x: number, z: number, color: string) {
-        this.context.save();
-        this.#translate();
-
-        this.context.strokeStyle = color;
-        this.context.lineWidth = 2 / this.camera.zoom;
-        this.context.strokeRect(-x * this.cellSize, -z * this.cellSize, this.cellSize, this.cellSize);
-
-        this.context.restore();
+    beginStroke(color: string) {
+        const ctx = this.context;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2 / this.camera.zoom;
+        ctx.beginPath();
     }
 
-    #translate() {
-        this.context.translate(this.camera.x, this.camera.y);
-        this.context.scale(this.camera.zoom, this.camera.zoom);
+    strokeCell(x: number, z: number) {
+        const cs = this.cellSize;
+        this.context.rect(-x * cs, -z * cs, cs, cs);
+    }
+
+    endStroke() {
+        this.context.stroke();
+    }
+
+    outlineCell(x: number, z: number, color: string) {
+        const ctx = this.context;
+        const cs = this.cellSize;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2 / this.camera.zoom;
+        ctx.strokeRect(-x * cs, -z * cs, cs, cs);
     }
 }
