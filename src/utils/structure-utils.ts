@@ -22,31 +22,16 @@ const preparedCache = new Map<string, PreparedCells>();
  * Rotates a single block coordinate around a pivot
  */
 export function rotateBlock(block: Pos, rotation: Rotation): Pos {
-    const dx = -block.x;
-    const dz = -block.z;
-    let rx = dx;
-    let rz = dz;
-
     switch (rotation) {
         case 90:
-            rx = -dz;
-            rz = dx;
-            break;
+            return {x: -block.z, y: block.y, z: block.x};
         case 180:
-            rx = -dx;
-            rz = -dz;
-            break;
+            return {x: -block.x, y: block.y, z: -block.z};
         case 270:
-            rx = dz;
-            rz = -dx;
-            break;
+            return {x: block.z, y: block.y, z: -block.x};
+        default:
+            return {x: block.x, y: block.y, z: block.z};
     }
-
-    return {
-        x: rx,
-        y: block.y,
-        z: rz
-    };
 }
 
 /**
